@@ -5,8 +5,8 @@ let isHovered = false;
 let isAfterHovered = false; // Додаємо змінну для після-hover ефекту
 let animationFrame;
 
-function setupButton(buttonId, iconSrc, hoverColor, afterHoverColor, shadowBlurSize = 5) {
-  const buttonContainer = select(buttonId);
+function setupButton( iconSrc, hoverColor, afterHoverColor, shadowBlurSize = 5) {
+  const buttonContainer = document.getElementById("buttonContainer");
   const buttonText = document.getElementById("buttonText");
   const buttonIcon = document.getElementById("buttonIcon");
 
