@@ -1,73 +1,146 @@
-let vertices;
-let buttonWidth = 180;
-let buttonHeight = 40;
-let isHovered = false;
-let isAfterHovered = false; // Додаємо змінну для після-hover ефекту
-let animationFrame;
+      let vertices;
+      let buttonWidth;
+      let buttonHeight;
+      let isHovered = false;
 
-function setupButton(buttonId, iconSrc, hoverColor, afterHoverColor, shadowBlurSize = 5) {
-  const buttonContainer = select(buttonId);
-  const buttonText = document.getElementById("buttonText");
-  const buttonIcon = document.getElementById("buttonIcon");
+      let defaultColor;
+      let hoverColor;
+      let textDefaultColor;
+      let textHoverColor;
+      let shadowOffsetX;
+      let shadowOffsetY;
+      let shadowBlur;
+      let shadowColor;
+      let hoverShadowColor;
 
-  buttonContainer.style.width = `${buttonWidth}px`;
-  buttonContainer.style.height = `${buttonHeight}px`;
-  buttonText.style.fontSize = `${buttonHeight / 3.5}px`;
-  buttonText.style.top = `${-2}px`;
-  buttonIcon.style.height = `${buttonHeight / 2}px`;
-  buttonIcon.style.left = `${-buttonHeight}px`;
-  buttonIcon.src = iconSrc;
+      function setup() {
+        const buttonContainer = select("#buttonContainer");
+        const buttonText = document.getElementById("buttonText");
 
-  const cnv = createCanvas(buttonWidth + 10, buttonHeight + 10); // Змінюваний відступ
-  cnv.parent(buttonContainer);
+        // Retrieve the DOM element from the p5.js element
+        const buttonContainerElt = buttonContainer.elt;
 
-  vertices = [
-    { x: 5, y: 5, radius: buttonHeight / 8 },
-    { x: buttonWidth, y: 5, radius: buttonHeight / 8 },
-    { x: buttonWidth, y: 5 + buttonHeight * 0.4, radius: buttonHeight / 6 },
-    { x: buttonWidth * 0.85, y: buttonHeight, radius: buttonHeight / 6 },
-    { x: 5, y: buttonHeight, radius: buttonHeight / 8 },
-  ];
+        // Read button dimensions and styles from data attributes
+        buttonWidth = parseInt(buttonContainerElt.getAttribute("data-width"));
+        buttonHeight = parseInt(buttonContainerElt.getAttribute("data-height"));
+        defaultColor = buttonContainerElt.getAttribute("data-color-default");
+        hoverColor = buttonContainerElt.getAttribute("data-color-hover");
 
-  drawButton(hoverColor, afterHoverColor, shadowBlurSize);
+        // Initialize text colors
+        textDefaultColor = buttonContainerElt.getAttribute(
+          "data-text-color-default"
+        );
+        textHoverColor = buttonContainerElt.getAttribute(
+          "data-text-color-hover"
+        );
 
-  buttonContainer.mouseOver(() => {
-    isHovered = true;
-    isAfterHovered = false;
-    drawButton(hoverColor, afterHoverColor, shadowBlurSize);
-  });
-  buttonContainer.mouseOut(() => {
-    isHovered = false;
-    isAfterHovered = true;
-    drawButton(hoverColor, afterHoverColor, shadowBlurSize);
-  });
-}
+        // Initialize shadow variables
+        shadowOffsetX = parseInt(
+          buttonContainerElt.getAttribute("data-shadow-offset-x")
+        );
+        shadowOffsetY = parseInt(
+          buttonContainerElt.getAttribute("data-shadow-offset-y")
+        );
+        shadowBlur = parseInt(
+          buttonContainerElt.getAttribute("data-shadow-blur")
+        );
+        shadowColor = buttonContainerElt.getAttribute(
+          "data-shadow-color-default"
+        );
+        hoverShadowColor = buttonContainerElt.getAttribute(
+          "data-shadow-color-hover"
+        );
 
-function drawButton(hoverColor, afterHoverColor, shadowBlurSize) {
-  clear();
-  const fillColor = isHovered ? hoverColor : afterHoverColor;
-  const shadowColor = isHovered
-    ? "rgba(69, 87, 247, 0.9)"
-    : "rgba(69, 87, 247, 0.4)";
+        // Read the radius divisor
+        const radiusDivisor = parseInt(
+          buttonContainerElt.getAttribute("data-radius")
+        );
 
-  drawingContext.shadowOffsetX = 5;
-  drawingContext.shadowOffsetY = 5;
-  drawingContext.shadowBlur = shadowBlurSize;
-  drawingContext.shadowColor = shadowColor;
-  fill(fillColor);
+        // Set width and height of the button
+        buttonContainerElt.style.width = `${buttonWidth}px`;
+        buttonContainerElt.style.height = `${buttonHeight}px`;
+        buttonText.style.fontSize = `${buttonHeight / 3.5}px`;
+        buttonText.style.top = `${-2}px`;
 
-  noStroke();
-  const ctx = canvas.getContext("2d");
-  ctx.beginPath();
-  roundedPoly(ctx, vertices);
-  ctx.fill();
-  ctx.stroke();
-  
-  drawingContext.shadowOffsetX = 0;
-  drawingContext.shadowOffsetY = 0;
-  drawingContext.shadowBlur = 0;
-  drawingContext.shadowColor = "rgba(0, 0, 0, 0)";
-}
+        const cnv = createCanvas(buttonWidth + 10, buttonHeight + 10);
+        cnv.parent(buttonContainer);
+
+        vertices = [
+          { x: 5, y: 5, radius: buttonHeight / radiusDivisor }, // Use radiusDivisor
+          { x: buttonWidth, y: 5, radius: buttonHeight / radiusDivisor },
+          {
+            x: buttonWidth,
+            y: 5 + buttonHeight * 0.65,
+            radius: buttonHeight / (radiusDivisor + 2), // Adjust as necessary
+          },
+          {
+            x: buttonWidth * 0.87,
+            y: buttonHeight,
+            radius: buttonHeight / (radiusDivisor + 2),
+          },
+          { x: 5, y: buttonHeight, radius: buttonHeight / radiusDivisor },
+        ];
+
+        drawButton();
+
+        // Unified hover events
+        buttonContainer.mouseOver(() => {
+          isHovered = true;
+          drawButton();
+        });
+        buttonContainer.mouseOut(() => {
+          isHovered = false;
+          drawButton();
+        });
+      }
+
+      function drawButton() {
+        clear();
+
+        // Set drop shadow properties
+        drawingContext.shadowOffsetX = shadowOffsetX;
+        drawingContext.shadowOffsetY = shadowOffsetY;
+        drawingContext.shadowBlur = shadowBlur;
+        drawingContext.shadowColor = isHovered ? hoverShadowColor : shadowColor;
+
+        // Draw the shadow first
+        fill(isHovered ? hoverColor : defaultColor); // This could be a neutral color for shadow
+        noStroke(); // Remove outline for shadow
+
+        const ctx = canvas.getContext("2d");
+        ctx.beginPath();
+        roundedPoly(ctx, vertices); // Draw the custom shape
+        ctx.fill(); // Fill shadow
+
+        // Reset shadow properties to prevent affecting the button shape
+        drawingContext.shadowOffsetX = 0;
+        drawingContext.shadowOffsetY = 0;
+        drawingContext.shadowBlur = 0;
+        drawingContext.shadowColor = "rgba(0, 0, 0, 0)";
+
+        // Now draw the button shape above the shadow
+        fill(isHovered ? hoverColor : defaultColor); // Set the fill color for the button
+        ctx.beginPath();
+        roundedPoly(ctx, vertices); // Draw the same custom shape
+        ctx.fill(); // Fill button shape
+        ctx.stroke(); // If you want to add an outline to the button
+
+        // Update text color
+        buttonText.style.color = isHovered ? textHoverColor : textDefaultColor;
+      }
+
+      function mousePressed() {
+        if (
+          mouseX >= 0 &&
+          mouseX <= buttonWidth &&
+          mouseY >= 0 &&
+          mouseY <= buttonHeight
+        ) {
+          if (isInsidePolygon(mouseX, mouseY, vertices)) {
+            alert("Button clicked!");
+          }
+        }
+      }
 
       function roundedPoly(ctx, points, radiusAll) {
         var i,
@@ -162,10 +235,9 @@ function drawButton(hoverColor, afterHoverColor, shadowBlurSize) {
         ctx.closePath();
       }
 
-function mousePressed() {
-  if (mouseX >= 0 && mouseX <= buttonWidth && mouseY >= 0 && mouseY <= buttonHeight) {
-    if (isInsidePolygon(mouseX, mouseY, vertices)) {
-      alert("Button clicked!");
-    }
-  }
-}
+      function draw() {
+        // No need to redraw in draw loop as it's handled by mouse events
+      }
+
+      // Use p5.js to start the sketch
+      new p5(setup);
