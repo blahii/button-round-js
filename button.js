@@ -1,12 +1,12 @@
- let vertices;
+      let vertices;
       let buttonWidth;
       let buttonHeight;
       let isHovered = false;
-      let animationFrame;
 
-      // Declare color and shadow variables in the global scope
       let defaultColor;
       let hoverColor;
+      let textDefaultColor;
+      let textHoverColor;
       let shadowOffsetX;
       let shadowOffsetY;
       let shadowBlur;
@@ -26,6 +26,14 @@
         defaultColor = buttonContainerElt.getAttribute("data-color-default");
         hoverColor = buttonContainerElt.getAttribute("data-color-hover");
 
+        // Initialize text colors
+        textDefaultColor = buttonContainerElt.getAttribute(
+          "data-text-color-default"
+        );
+        textHoverColor = buttonContainerElt.getAttribute(
+          "data-text-color-hover"
+        );
+
         // Initialize shadow variables
         shadowOffsetX = parseInt(
           buttonContainerElt.getAttribute("data-shadow-offset-x")
@@ -43,6 +51,11 @@
           "data-shadow-color-hover"
         );
 
+        // Read the radius divisor
+        const radiusDivisor = parseInt(
+          buttonContainerElt.getAttribute("data-radius")
+        );
+
         // Set width and height of the button
         buttonContainerElt.style.width = `${buttonWidth}px`;
         buttonContainerElt.style.height = `${buttonHeight}px`;
@@ -53,15 +66,19 @@
         cnv.parent(buttonContainer);
 
         vertices = [
-          { x: 5, y: 5, radius: buttonHeight / 8 },
-          { x: buttonWidth, y: 5, radius: buttonHeight / 8 },
+          { x: 5, y: 5, radius: buttonHeight / radiusDivisor }, // Use radiusDivisor
+          { x: buttonWidth, y: 5, radius: buttonHeight / radiusDivisor },
           {
             x: buttonWidth,
-            y: 5 + buttonHeight * 0.4,
-            radius: buttonHeight / 6,
+            y: 5 + buttonHeight * 0.65,
+            radius: buttonHeight / (radiusDivisor + 2), // Adjust as necessary
           },
-          { x: buttonWidth * 0.85, y: buttonHeight, radius: buttonHeight / 6 },
-          { x: 5, y: buttonHeight, radius: buttonHeight / 8 },
+          {
+            x: buttonWidth * 0.87,
+            y: buttonHeight,
+            radius: buttonHeight / (radiusDivisor + 2),
+          },
+          { x: 5, y: buttonHeight, radius: buttonHeight / radiusDivisor },
         ];
 
         drawButton();
@@ -86,22 +103,30 @@
         drawingContext.shadowBlur = shadowBlur;
         drawingContext.shadowColor = isHovered ? hoverShadowColor : shadowColor;
 
-        // Set fill color for the button
-        fill(isHovered ? hoverColor : defaultColor);
-
-        noStroke(); // Remove outline if you don't want a border
+        // Draw the shadow first
+        fill(isHovered ? hoverColor : defaultColor); // This could be a neutral color for shadow
+        noStroke(); // Remove outline for shadow
 
         const ctx = canvas.getContext("2d");
         ctx.beginPath();
         roundedPoly(ctx, vertices); // Draw the custom shape
-        ctx.fill();
-        ctx.stroke();
+        ctx.fill(); // Fill shadow
 
-        // Reset shadow properties to prevent affecting other elements
+        // Reset shadow properties to prevent affecting the button shape
         drawingContext.shadowOffsetX = 0;
         drawingContext.shadowOffsetY = 0;
         drawingContext.shadowBlur = 0;
         drawingContext.shadowColor = "rgba(0, 0, 0, 0)";
+
+        // Now draw the button shape above the shadow
+        fill(isHovered ? hoverColor : defaultColor); // Set the fill color for the button
+        ctx.beginPath();
+        roundedPoly(ctx, vertices); // Draw the same custom shape
+        ctx.fill(); // Fill button shape
+        ctx.stroke(); // If you want to add an outline to the button
+
+        // Update text color
+        buttonText.style.color = isHovered ? textHoverColor : textDefaultColor;
       }
 
       function mousePressed() {
@@ -209,3 +234,10 @@
         }
         ctx.closePath();
       }
+
+      function draw() {
+        // No need to redraw in draw loop as it's handled by mouse events
+      }
+
+      // Use p5.js to start the sketch
+      new p5(setup);
